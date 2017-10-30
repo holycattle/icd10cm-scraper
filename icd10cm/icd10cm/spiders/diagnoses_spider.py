@@ -26,10 +26,10 @@ class ICD10DiagnosesSpider(scrapy.Spider):
         for href in response.xpath('//div/div/*[not(@class="navTable")]/ul[contains(@class, "ulPopover")]/li/a[contains(@class, "identifier")]/@href'):
             yield response.follow(self.root_url+href.extract(), self.parse_general_diagnosis)
         self.logger.info("trying next")
-        #next_page = response.xpath('//td[div[@class="tip iright"]]/a/@href').extract_first()
+        next_page = response.xpath('//td[div[@class="tip iright"]]/a/@href').extract_first()
         #self.logger.info(next_page)
-        #if (next_page):
-        #    yield scrapy.Request(self.root_url+next_page, self.parse)
+        if (next_page):
+            yield scrapy.Request(self.root_url+next_page, self.parse)
 
     def parse_general_diagnosis(self, response):
         diagnosis_hrefs = response.xpath('//div[@class="body-content"]/ul[@class="codeHierarchy"]//li[i[contains(@class, "success")]]//a/@href')
