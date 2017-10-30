@@ -8,7 +8,7 @@ DEFAULT_MAX = 100
 # parse children:
   # i) get hrefs of Billable children: '//div[@class="body-content"]/ul[@class="codeHierarchy"]//li[i[contains(@class, "success")]]//a/@href'
   # ia) get header: '//h2[@class="codeDescription"]'
-  # ib) get description
+  # ib) get description: '//span[text()="Approximate Synonyms"]/following-sibling::ul[1]/li'
 
 def extract_from_css(query):
     return response.css(query).extract_first().strip()
@@ -26,10 +26,10 @@ class ICD10DiagnosesSpider(scrapy.Spider):
         for href in response.xpath('//div/div/*[not(@class="navTable")]/ul[contains(@class, "ulPopover")]/li/a[contains(@class, "identifier")]/@href'):
             yield response.follow(self.root_url+href.extract(), self.parse_general_diagnosis)
         self.logger.info("trying next")
-        next_page = response.xpath('//td[div[@class="tip iright"]]/a/@href').extract_first()
-        self.logger.info(next_page)
-        if (next_page):
-            yield scrapy.Request(self.root_url+next_page, self.parse)
+        #next_page = response.xpath('//td[div[@class="tip iright"]]/a/@href').extract_first()
+        #self.logger.info(next_page)
+        #if (next_page):
+        #    yield scrapy.Request(self.root_url+next_page, self.parse)
 
     def parse_general_diagnosis(self, response):
         diagnosis_hrefs = response.xpath('//div[@class="body-content"]/ul[@class="codeHierarchy"]//li[i[contains(@class, "success")]]//a/@href')
@@ -40,9 +40,11 @@ class ICD10DiagnosesSpider(scrapy.Spider):
     def parse_diagnosis(self, response):
       header = response.xpath('//h2[@class="codeDescription"]/text()').extract_first().strip()
       code = response.xpath('//span[@class="identifierDetail"]/text()').extract_first().strip()
+      descriptions = response.xpath('//span[text()="Approximate Synonyms"]/following-sibling::ul[1]/li/text()')
       diagnosis = {
         'code': code,
-        'header': header
+        'header': header,
+        'approximate_synonyms': [d.extract() for d in descriptions]
       }
       data.append(diagnosis)
       yield diagnosis
